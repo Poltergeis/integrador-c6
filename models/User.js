@@ -3,15 +3,15 @@ import { DataTypes } from "sequelize";
 import bcrypt from "bcrypt";
 
 const UserModel = sequelize.define('User', {
-    username: {
+    /*username: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
             isAlphanumeric: true,
             len: [3, 50]
         }
-    },
-    email: {
+    },*/
+    gmail: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,

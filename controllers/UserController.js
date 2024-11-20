@@ -1,6 +1,7 @@
 import signale from "signale";
 import sanitizeHtml from "sanitize-html";
 import UserModel from "../models/User.js";
+import express from "express";
 import {
   validateSafeString,
   validateEmail,
@@ -13,28 +14,28 @@ import bcrypt from "bcrypt";
  * @type string
  */
 const JWT_SECRET = process.env.JWT_SECRET;
-
+/** @param { express.Request } req @param { express.Response } res */
 async function login(req, res) {
   try {
-    const { email, password } = req.body;
-    const safeEmail = sanitizeHtml(email).trim();
+    const { gmail, password } = req.body;
+    const safeGmail = sanitizeHtml(gmail).trim();
     const safePassword = sanitizeHtml(password).trim();
 
-    if (!validateExistingStrings([safeEmail, safePassword])) {
+    if (!validateExistingStrings([safeGmail, safePassword])) {
       return res.status(400).json({
         success: false,
         message: "Email and password cannot be empty",
       });
     }
 
-    if (!validateEmail(safeEmail) || !validateSafeString(safePassword)) {
+    if (!validateEmail(safeGmail) || !validateSafeString(safePassword)) {
       return res.status(400).json({
         success: false,
         message: "Request data is invalid or malformed",
       });
     }
 
-    const user = await UserModel.findOne({ where: { email: safeEmail } });
+    const user = await UserModel.findOne({ where: { gmail: safeGmail } });
 
     if (!user) {
       return res.status(404).json({
@@ -55,9 +56,17 @@ async function login(req, res) {
       expiresIn: "1h",
     });
 
+    res.cookie('authToken', token, {
+      httpOnly: true,
+      maxAge: 3600 * 1000,
+      sameSite: 'strict'
+    });
+
     return res.status(200).json({
       success: true,
-      token,
+      user: {
+        username: user.username
+      },
       message: "User has been authenticated",
     });
   } catch (error) {
@@ -71,19 +80,18 @@ async function login(req, res) {
 
 async function register(req, res) {
   try {
-    const { username, email, password } = req.body;
-    const safeUsername = sanitizeHtml(username).trim();
-    const safeEmail = sanitizeHtml(email).trim();
+    const { gmail, password } = req.body;
+    //const safeUsername = sanitizeHtml(username).trim();
+    const safeGmail = sanitizeHtml(gmail).trim();
     const safePassword = sanitizeHtml(password).trim();
-    if (!validateExistingStrings([safeUsername, safeEmail, safePassword])) {
+    if (!validateExistingStrings([safeGmail, safePassword])) {
       return res.status(400).json({
         success: false,
         message: "username, email and password cannot be empty",
       });
     }
     if (
-      !validateSafeString(safeUsername) ||
-      !validateEmail(safeEmail) ||
+      !validateEmail(safeGmail) ||
       !validateSafeString(safePassword)
     ) {
       return res.status(400).json({
@@ -93,7 +101,7 @@ async function register(req, res) {
     }
 
     const existingUser = await UserModel.findOne({
-      where: { email: safeEmail },
+      where: { gmail: safeGmail },
     });
     if (existingUser) {
       return res.status(400).json({
@@ -103,8 +111,7 @@ async function register(req, res) {
     }
 
     const newUser = await UserModel.create({
-      username: safeUsername,
-      email: safeEmail,
+      gmail: safeGmail,
       password: safePassword,
     });
     if (!newUser) {

@@ -9,15 +9,13 @@ const JWT_SECRET = process.env.JWT_SECRET;
  */
 export async function validateToken(req, res, next) {
     try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        const token = req.cookies.authToken;
+        if (!token) {
             return res.status(401).json({
                 success: false,
-                message: 'Authorization token is missing or malformed'
+                message: 'Authorization token is missing'
             });
         }
-        
-        const token = authHeader.split(' ')[1];
         
         const decoded = jwt.verify(token, JWT_SECRET);
 
