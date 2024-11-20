@@ -10,7 +10,7 @@ export function setWebsocketServer(server) {
     wss.on('connection', (socket, req) => {
         signale.info("new client connected to wss");
 
-        /*const cookies = req.headers.cookie;
+        const cookies = req.headers.cookie;
         const authToken = extractCookieValue(cookies, 'authToken');
 
         if (!authToken) {
@@ -22,13 +22,9 @@ export function setWebsocketServer(server) {
 
         const user = jwt.decode(authToken, JWT_SECRET); 
 
-        socket.onmessage = function (event) {
+        socket.onmessage = async function (event) {
             const parsedData = JSON.parse(event.data);
-
-            switch (parsedData.event) {
-                
-            }
-        }*/
+        }
     });
 
     return wss;

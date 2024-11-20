@@ -11,7 +11,7 @@ import BPMModel from "./models/BPM.js";
  */
 export async function setMqtt(wss) {
     try {
-        const client = await mqtt.connectAsync(process.env.MQTT_URL, {
+        const client = await mqtt.connectAsync(process.env.MQTT_BROKER, {
             username: process.env.MQTT_USERNAME,
             password: process.env.MQTT_PASSWORD
         });
@@ -55,28 +55,8 @@ export async function setMqtt(wss) {
 
         client.on('message', async (topic, payload) => {
             const parsedData = JSON.parse(payload.toString());
-            signale.success(parsedData + " recibido de mqtt");
-            switch (topic) {
-                case process.env.TOPIC_DISTANCIA:
-                    await DistanciaModel.create({
-                        distancia: parsedData.valor, fecha: new Date().toLocaleTimeString()
-                    });
-                
-                case process.env.TOPIC_TOQUE:
-                    await ToqueModel.create({
-                        toque: parsedData.valor, fecha: new Date().toLocaleTimeString()
-                    });
-
-                case process.env.TOPIC_BPM:
-                    await BPMModel.create({
-                        bpm: parsedData.valor, fecha: new Date().toLocaleTimeString()
-                    });
-
-                case process.env.TOPIC_TEMPERATURA:
-                    await TempModel.create({
-                        temperatura: parsedData.valor, fecha: new Date().toLocaleTimeString()
-                    });
-            }
+            signale.success(parsedData.Event + ": " + parsedData.valor + " recibido de mqtt");
+            
             wss.clients.forEach((client) => {
                 client.send(JSON.stringify({ topic, parsedData }));
             });

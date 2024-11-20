@@ -1,7 +1,7 @@
 import sequelize from "../database/connectToDatabase.js";
 import { DataTypes } from "sequelize";
 
-const ToqueModel = sequelize.define("distancias", {
+const ToqueModel = sequelize.define("Toques", {
     toque: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -14,7 +14,8 @@ const ToqueModel = sequelize.define("distancias", {
     }
 }, {
     tableName: 'Distancias',
-    timestamps: false
+    timestamps: false,
+    primaryKey: false
 });
 
 export default ToqueModel;

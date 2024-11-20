@@ -14,7 +14,8 @@ const DistanciaModel = sequelize.define("distancias", {
     }
 }, {
     tableName: 'Distancias',
-    timestamps: false
+    timestamps: false,
+    primaryKey: false
 });
 
 export default DistanciaModel;

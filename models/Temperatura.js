@@ -1,7 +1,7 @@
 import sequelize from "../database/connectToDatabase.js";
 import { DataTypes } from "sequelize";
 
-const TempModel = sequelize.define("BPM", {
+const TempModel = sequelize.define("Temperaturas", {
     temperatura: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -15,7 +15,8 @@ const TempModel = sequelize.define("BPM", {
 
 }, {
     tableName: 'temperaturas',
-    timestamps: false
+    timestamps: false,
+    primaryKey: false
 });
 
 export default TempModel;
