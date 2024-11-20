@@ -19,7 +19,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: [process.env.ALLOWED_DOMAIN],
+    origin: [process.env.ALLOWED_DOMAIN, "*"],
     credentials: true
 }));
 app.use(helmet());
