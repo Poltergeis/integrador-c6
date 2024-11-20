@@ -13,7 +13,8 @@ export async function setMqtt(wss) {
   try {
     const client = await mqtt.connectAsync(process.env.MQTT_BROKER, {
       username: process.env.MQTT_USERNAME,
-      password: process.env.MQTT_PASSWORD,
+        password: process.env.MQTT_PASSWORD,
+      host: process.env.MQTT_HOST
     });
     signale.success("connected to mqtt");
 
