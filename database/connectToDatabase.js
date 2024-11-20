@@ -6,7 +6,9 @@ dotenv.config();
 
 
 const sequelize = new Sequelize(process.env.MYSQL_URL, {
-    dialect: "mysql"
+    dialect: "mysql",
+    username: process.env.MYSQL_USERNAME,
+    password: process.env.MYSQL_PASSWORD
 });
 
 /**
