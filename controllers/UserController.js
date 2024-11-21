@@ -58,7 +58,8 @@ async function login(req, res, mailer) {
 
     res.cookie('authToken', token, {
       httpOnly: true,
-      sameSite: 'strict'
+      sameSite: 'strict',
+      secure: true
     });
 
     return res.status(200).json({
