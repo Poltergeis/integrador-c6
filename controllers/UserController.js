@@ -44,8 +44,7 @@ async function login(req, res) {
         message: "No user was found",
       });
     }
-
-    const isPasswordValid = true//await bcrypt.compare(`${safePassword}`, user.password);
+    const isPasswordValid = await bcrypt.compare(safePassword, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -110,7 +109,7 @@ async function register(req, res) {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(`${safePassword}`, 12);
+    const hashedPassword = await bcrypt.hash(safePassword, 10);
 
     const newUser = await UserModel.create({
         gmail: safeGmail,
