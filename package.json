@@ -24,6 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.10.2",
     "mysql2": "^3.11.4",
+    "nodemailer": "^6.9.16",
     "redis": "^4.7.0",
     "sanitize-html": "^2.13.1",
     "sequelize": "^6.37.5",

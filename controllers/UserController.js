@@ -15,7 +15,7 @@ import bcrypt from "bcrypt";
  */
 const JWT_SECRET = process.env.JWT_SECRET;
 /** @param { express.Request } req @param { express.Response } res */
-async function login(req, res) {
+async function login(req, res, mailer) {
   try {
     const { gmail, password } = req.body;
     const safeGmail = sanitizeHtml(gmail).trim();
@@ -51,7 +51,7 @@ async function login(req, res) {
         message: "Incorrect password",
       });
     }
-
+    mailer.to = safeGmail;
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: "1h",
     });

@@ -16,17 +16,9 @@ const postRoutes = [
 ];
 //valueFieldName es "toque", "bpm", "distancia" o "temperatura"
 const getRoutes = [
-    { path: "/prom/dia/toque", handler: async(req, res) => await statisticController.searchPerDay(req, res, ToqueModel, "toque") },
-    { path: "/prom/semana/toque", handler: async(req, res) => await statisticController.searchPerWeek(req, res, ToqueModel, "toque") },
-    { path: "/prom/mes/toque", handler: async(req, res) => await statisticController.searchPerMonth(req, res, ToqueModel, "toque") },
-
     { path: "/prom/dia/bpm", handler: async(req, res) => await statisticController.searchPerDay(req, res, BPMModel, "bpm") },
     { path: "/prom/semana/bpm", handler: async(req, res) => await statisticController.searchPerWeek(req, res, BPMModel, "bpm") },
     { path: "/prom/mes/bpm", handler: async(req, res) => await statisticController.searchPerMonth(req, res, BPMModel, "bpm") },
-
-    { path: "/prom/dia/distancia", handler: async(req, res) => await statisticController.searchPerDay(req, res, DistanciaModel, "distancia") },
-    { path: "/prom/semana/distancia", handler: async(req, res) => await statisticController.searchPerWeek(req, res, DistanciaModel, "distancia") },
-    { path: "/prom/mes/distancia", handler: async(req, res) => await statisticController.searchPerMonth(req, res, DistanciaModel, "distancia") },
 
     { path: "/prom/dia/temperatura", handler: async(req, res) => await statisticController.searchPerDay(req, res, TempModel, "temperatura") },
     { path: "/prom/semana/temperatura", handler: async(req, res) => await statisticController.searchPerWeek(req, res, TempModel, "temperatura") },
@@ -35,9 +27,9 @@ const getRoutes = [
 
 
 postRoutes.forEach(route => {
-    recordsRouter.post(route.path, validateToken, route.handler);
+    recordsRouter.post(route.path, route.handler);
 });
 
 getRoutes.forEach(route => {
-    recordsRouter.get(route.path, validateToken, route.handler)
+    recordsRouter.get(route.path, route.handler)
 });

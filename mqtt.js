@@ -9,7 +9,7 @@ import BPMModel from "./models/BPM.js";
 /**
  * @param {WebSocketServer} wss
  */
-export async function setMqtt(wss) {
+export async function setMqtt(wss, mailer) {
   try {
     const client = await mqtt.connectAsync(process.env.MQTT_BROKER, {
         username: process.env.MQTT_USERNAME,
@@ -58,7 +58,10 @@ export async function setMqtt(wss) {
         signale.success(
           parsedData.Event + ": " + parsedData.valor + " recibido de mqtt"
         );
-
+          if (topic === process.env.TOPIC_DISTANCIA && parsedData.movimiento) {
+              mailer.sendEmail();
+              return;
+        }
         wss.clients.forEach((client) => {
           client.send(JSON.stringify({ topic, parsedData }));
         });
