@@ -11,6 +11,7 @@ export async function validateToken(req, res, next) {
     try {
         const token = req.cookies.authToken;
         if (!token) {
+            signale.info(`attempted unauthorized request blocked`);
             return res.status(401).json({
                 success: false,
                 message: 'Authorization token is missing'
