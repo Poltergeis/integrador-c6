@@ -27,9 +27,9 @@ const getRoutes = [
 
 
 postRoutes.forEach(route => {
-    recordsRouter.post(route.path, route.handler);
+    recordsRouter.post(route.path, validateToken, route.handler);
 });
 
 getRoutes.forEach(route => {
-    recordsRouter.get(route.path, route.handler)
+    recordsRouter.get(route.path, validateToken, route.handler)
 });
