@@ -12,9 +12,9 @@ import BPMModel from "./models/BPM.js";
 export async function setMqtt(wss, mailer) {
   try {
     const client = await mqtt.connectAsync(process.env.MQTT_BROKER, {
-        username: process.env.MQTT_USERNAME,
-        password: process.env.MQTT_PASSWORD,
-        host: process.env.MQTT_HOST
+      username: process.env.MQTT_USERNAME,
+      password: process.env.MQTT_PASSWORD,
+      host: process.env.MQTT_HOST,
     });
     signale.success("connected to mqtt");
 
@@ -58,9 +58,9 @@ export async function setMqtt(wss, mailer) {
         signale.success(
           parsedData.Event + ": " + parsedData.valor + " recibido de mqtt"
         );
-          if (topic === process.env.TOPIC_DISTANCIA && parsedData.movimiento) {
-              mailer.sendEmail();
-              return;
+        if (topic === process.env.TOPIC_DISTANCIA && parsedData.movimiento) {
+          mailer.sendEmail();
+          return;
         }
         wss.clients.forEach((client) => {
           client.send(JSON.stringify({ topic, parsedData }));

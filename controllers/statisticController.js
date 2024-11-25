@@ -82,35 +82,31 @@ async function searchPerMonth(req, res, TypeModel, valueFieldName) {
             });
         }
 
-        const lastMonth = new Date(lastRecord.fecha).getMonth(); // Mes (0-11)
-        const lastYear = new Date(lastRecord.fecha).getFullYear(); // Año
+        const lastDate = new Date(lastRecord.fecha);
+        const lastMonth = lastDate.getMonth(); // Mes (0-11)
+        const lastYear = lastDate.getFullYear(); // Año
 
         // Buscar registros del mes actual
         const currentMonthRecords = await TypeModel.findAll({
-            where: sequelize.where(
-                sequelize.fn("MONTH", sequelize.col("fecha")),
-                lastMonth + 1 // Mes en formato (1-12)
-            ),
-            include: [
-                {
-                    model: TypeModel,
-                    where: sequelize.where(sequelize.fn("YEAR", sequelize.col("fecha")), lastYear),
-                },
-            ],
+            where: {
+                [Op.and]: [
+                    sequelize.where(sequelize.fn("MONTH", sequelize.col("fecha")), lastMonth + 1),
+                    sequelize.where(sequelize.fn("YEAR", sequelize.col("fecha")), lastYear)
+                ]
+            }
         });
 
         // Buscar registros del mes anterior
+        const prevMonth = lastMonth === 0 ? 11 : lastMonth - 1;
+        const prevYear = lastMonth === 0 ? lastYear - 1 : lastYear;
+
         const prevMonthRecords = await TypeModel.findAll({
-            where: sequelize.where(
-                sequelize.fn("MONTH", sequelize.col("fecha")),
-                lastMonth
-            ),
-            include: [
-                {
-                    model: TypeModel,
-                    where: sequelize.where(sequelize.fn("YEAR", sequelize.col("fecha")), lastYear),
-                },
-            ],
+            where: {
+                [Op.and]: [
+                    sequelize.where(sequelize.fn("MONTH", sequelize.col("fecha")), prevMonth + 1),
+                    sequelize.where(sequelize.fn("YEAR", sequelize.col("fecha")), prevYear)
+                ]
+            }
         });
 
         // Calcular las medias
@@ -118,8 +114,10 @@ async function searchPerMonth(req, res, TypeModel, valueFieldName) {
         const promAnterior = calculateMean(prevMonthRecords, valueFieldName);
 
         // Obtener nombres de los meses
-        const currentMonthName = new Date(lastRecord.fecha).toLocaleString('default', { month: 'long' });
-        const prevMonthName = new Date(new Date(lastRecord.fecha).setMonth(lastMonth - 1)).toLocaleString('default', { month: 'long' });
+        const currentMonthName = lastDate.toLocaleString("default", { month: "long" });
+        const prevMonthDate = new Date(lastDate);
+        prevMonthDate.setMonth(prevMonth);
+        const prevMonthName = prevMonthDate.toLocaleString("default", { month: "long" });
 
         return res.status(200).json({
             fechaActual: currentMonthName,
@@ -128,11 +126,11 @@ async function searchPerMonth(req, res, TypeModel, valueFieldName) {
             promAnterior
         });
     } catch (error) {
-        signale.error(error);
+        signale.error("Error al buscar registros por mes:", error.message);
         return res.status(500).json({
             success: false,
             message: "Error interno del servidor",
-            error
+            error: error.message
         });
     }
 }
@@ -147,7 +145,7 @@ async function searchPerDay(req, res, TypeModel, valueFieldName) {
         if (!lastRecord) {
             return res.status(404).json({
                 success: false,
-                message: "No se encontraron datos"
+                message: "No se encontraron registros en la base de datos"
             });
         }
 
@@ -169,11 +167,26 @@ async function searchPerDay(req, res, TypeModel, valueFieldName) {
             )
         });
 
+        if (currentDayRecords.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No se encontraron registros para el día actual"
+            });
+        }
+
+        if (prevDayRecords.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No se encontraron registros para el día anterior"
+            });
+        }
+
         // Calcular las medias
         const promActual = calculateMean(currentDayRecords, valueFieldName);
         const promAnterior = calculateMean(prevDayRecords, valueFieldName);
 
         return res.status(200).json({
+            success: true,
             fechaActual: `${lastDate.getDate()}-${lastDate.getMonth() + 1}-${lastDate.getFullYear()}`,
             fechaAnterior: `${prevDayRecords[0].fecha.getDate()}-${prevDayRecords[0].fecha.getMonth() + 1}-${prevDayRecords[0].fecha.getFullYear()}`,
             promActual,
@@ -183,8 +196,8 @@ async function searchPerDay(req, res, TypeModel, valueFieldName) {
         signale.error(error);
         return res.status(500).json({
             success: false,
-            message: "Error interno del servidor",
-            error
+            message: "Error al procesar la consulta de registros",
+            errorDetails: error.message
         });
     }
 }
@@ -195,53 +208,73 @@ async function searchPerWeek(req, res, TypeModel, valueFieldName) {
             order: [["fecha", "DESC"]]
         });
 
-        if (!lastRecord) {
-            return res.status(404).json({
-                success: false,
-                message: "No se encontraron datos"
-            });
-        }
-
         const lastDate = new Date(lastRecord.fecha);
-        const currentMonth = lastDate.getMonth(); // Mes actual (0-11)
-        const currentYear = lastDate.getFullYear(); // Año actual
 
-        // Función para obtener la semana del mes
-        function getWeekOfMonth(date) {
-            const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-            const dayOfMonth = date.getDate();
-            return Math.ceil((dayOfMonth + startOfMonth.getDay()) / 7);
-        }
+        // Calcular el inicio de la semana actual
+        const startOfCurrentWeek = new Date(lastDate);
+        startOfCurrentWeek.setDate(lastDate.getDate() - lastDate.getDay());
 
-        // Obtener la semana actual y la semana anterior
-        const currentWeek = getWeekOfMonth(lastDate); // Semana del mes actual
-        const prevDate = new Date(lastDate);
-        prevDate.setDate(lastDate.getDate() - 7); // Restar 7 días para obtener el día de la semana anterior
-        const prevWeek = getWeekOfMonth(prevDate); // Semana del mes anterior
+        // Calcular el inicio de la semana anterior
+        const startOfPreviousWeek = new Date(startOfCurrentWeek);
+        startOfPreviousWeek.setDate(startOfCurrentWeek.getDate() - 7);
+
+        // Calcular el final de la semana actual
+        const endOfCurrentWeek = new Date(startOfCurrentWeek);
+        endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+
+        // Calcular el final de la semana anterior
+        const endOfPreviousWeek = new Date(startOfPreviousWeek);
+        endOfPreviousWeek.setDate(startOfPreviousWeek.getDate() + 6);
 
         // Buscar registros de la semana actual
         const currentWeekRecords = await TypeModel.findAll({
-            where: sequelize.where(
-                sequelize.fn("WEEK", sequelize.col("fecha")),
-                currentWeek
-            )
+            where: {
+                fecha: {
+                    [Op.between]: [startOfCurrentWeek, endOfCurrentWeek]
+                }
+            }
         });
 
         // Buscar registros de la semana anterior
         const prevWeekRecords = await TypeModel.findAll({
-            where: sequelize.where(
-                sequelize.fn("WEEK", sequelize.col("fecha")),
-                prevWeek
-            )
+            where: {
+                fecha: {
+                    [Op.between]: [startOfPreviousWeek, endOfPreviousWeek]
+                }
+            }
         });
 
-        // Calcular las medias
+        // Validaciones de registros
+        if (currentWeekRecords.length === 0) {
+            return res.status(404).json({
+                success: false,
+                errorCode: 'NO_CURRENT_WEEK_RECORDS',
+                message: "No se encontraron registros para la semana actual"
+            });
+        }
+
+        if (prevWeekRecords.length === 0) {
+            return res.status(404).json({
+                success: false,
+                errorCode: 'NO_PREVIOUS_WEEK_RECORDS',
+                message: "No se encontraron registros para la semana anterior"
+            });
+        }
+
+        // Calcular promedios
         const promActual = calculateMean(currentWeekRecords, valueFieldName);
         const promAnterior = calculateMean(prevWeekRecords, valueFieldName);
 
+        // Calcular número de semanas
+        const getWeekNumber = (date) => {
+            const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+            return Math.ceil(((date - firstDayOfMonth) / (7 * 24 * 60 * 60 * 1000)) + 1);
+        };
+
         return res.status(200).json({
-            fechaActual: `semana ${currentWeek}`,
-            fechaAnterior: `semana ${prevWeek}`,
+            success: true,
+            fechaActual: `semana ${getWeekNumber(lastDate)}`,
+            fechaAnterior: `semana ${getWeekNumber(startOfPreviousWeek)}`,
             promActual,
             promAnterior
         });
@@ -249,8 +282,9 @@ async function searchPerWeek(req, res, TypeModel, valueFieldName) {
         signale.error(error);
         return res.status(500).json({
             success: false,
+            errorCode: 'SERVER_ERROR',
             message: "Error interno del servidor",
-            error
+            errorDetails: error.message
         });
     }
 }
